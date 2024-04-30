@@ -16,14 +16,14 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	user, err := usecase.Register(registerData)
+	user, registerError := usecase.Register(registerData)
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if registerError != nil {
+		c.JSON(int(registerError.ErrorCode), gin.H{"error": registerError.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully register"})
 }
 
 func Login(c *gin.Context) {
@@ -34,12 +34,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := usecase.Login(loginData)
+	token, loginError := usecase.Login(loginData)
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if loginError != nil {
+		c.JSON(int(loginError.ErrorCode), gin.H{"error": loginError.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token, "message": "successfully login"})
 }

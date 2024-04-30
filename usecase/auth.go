@@ -14,17 +14,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Register(registerData repository.Register) (*repository.User, error) {
+func Register(registerData repository.Register) (*repository.UserResponse, *repository.StandardError) {
 	var userFound repository.User
 	repository.DB.Where("username=?", registerData.Username).Find(&userFound)
-
 	if userFound.ID != 0 {
-		return nil, errors.New("user already exist")
+		return nil, &repository.StandardError{Error: errors.New("user already exist"), ErrorCode: http.StatusBadRequest}
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(registerData.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, err
+		return nil, &repository.StandardError{Error: err, ErrorCode: http.StatusInternalServerError}
 	}
 
 	user := &repository.User{
@@ -34,22 +33,29 @@ func Register(registerData repository.Register) (*repository.User, error) {
 	}
 
 	if err := repository.DB.Create(&user).Error; err != nil {
-		return nil, errors.New("create user db failure")
+		return nil, &repository.StandardError{Error: errors.New("create user db failure"), ErrorCode: http.StatusInternalServerError}
 	}
 
-	return user, nil
+	userResponse := repository.UserResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Username:  user.Username,
+		CreatedAt: user.CreatedAt,
+	}
+
+	return &userResponse, nil
 }
 
-func Login(loginData repository.Login) (string, error) {
+func Login(loginData repository.Login) (string, *repository.StandardError) {
 	var userFound repository.User
-	repository.DB.Where("username=?", loginData.Username).Find(&userFound)
 
+	repository.DB.Where("username=?", loginData.Username).Find(&userFound)
 	if userFound.ID == 0 {
-		return "", errors.New("user not found")
+		return "", &repository.StandardError{Error: errors.New("user not found"), ErrorCode: http.StatusBadRequest}
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(userFound.Password), []byte(loginData.Password)); err != nil {
-		return "", errors.New("invalid password")
+		return "", &repository.StandardError{Error: errors.New("wrong password"), ErrorCode: http.StatusUnauthorized}
 	}
 
 	generateToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -58,9 +64,8 @@ func Login(loginData repository.Login) (string, error) {
 	})
 
 	token, err := generateToken.SignedString([]byte(os.Getenv("SECRET")))
-
 	if err != nil {
-		return "", errors.New("failed to generate token")
+		return "", &repository.StandardError{Error: errors.New("failed to generate token"), ErrorCode: http.StatusInternalServerError}
 	}
 
 	return token, nil
@@ -111,7 +116,6 @@ func ValidateToken(c *gin.Context) {
 
 	var user repository.User
 	repository.DB.Where("ID=?", claims["id"]).Find(&user)
-
 	if user.ID == 0 {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return

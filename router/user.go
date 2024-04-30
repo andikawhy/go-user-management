@@ -17,14 +17,14 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := usecase.Register(createUserData)
+	user, registerError := usecase.Register(createUserData)
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if registerError != nil {
+		c.JSON(int(registerError.ErrorCode), gin.H{"error": registerError.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully create user"})
 }
 
 func RemoveUser(c *gin.Context) {
@@ -48,23 +48,23 @@ func RemoveUser(c *gin.Context) {
 		return
 	}
 
-	user, err := usecase.RemoveUser(userIDInt, currentUserIdInt)
+	user, removeUserError := usecase.RemoveUser(userIDInt, currentUserIdInt)
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if removeUserError != nil {
+		c.JSON(int(removeUserError.ErrorCode), gin.H{"error": removeUserError.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully remove user"})
 }
 
 func ListUsers(c *gin.Context) {
 	users, err := usecase.ListUsers()
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(int(err.ErrorCode), gin.H{"error": err.Error.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": users})
+	c.JSON(http.StatusOK, gin.H{"data": users, "message": "successfully list users"})
 }
