@@ -9,19 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserController struct {
+type UserRouter struct {
 	userUsecase usecase.UserUsecase
 	authUsecase usecase.AuthUsecase
 }
 
-func NewUserController(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) *UserController {
-	return &UserController{
+func NewUserRouter(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) UserRouter {
+	return UserRouter{
 		userUsecase: userUsecase,
 		authUsecase: authUsecase,
 	}
 }
 
-func (t *UserController) CreateUser(c *gin.Context) {
+func (t *UserRouter) CreateUser(c *gin.Context) {
 	var createUserData repository.Register
 
 	if err := c.ShouldBindJSON(&createUserData); err != nil {
@@ -31,7 +31,7 @@ func (t *UserController) CreateUser(c *gin.Context) {
 
 	user, registerError := t.authUsecase.Register(createUserData)
 
-	if registerError != nil {
+	if registerError.Error != nil {
 		c.JSON(int(registerError.ErrorCode), gin.H{"error": registerError.Error.Error()})
 		return
 	}
@@ -39,7 +39,7 @@ func (t *UserController) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully create user"})
 }
 
-func (t *UserController) RemoveUser(c *gin.Context) {
+func (t *UserRouter) RemoveUser(c *gin.Context) {
 	userId := c.Param("id")
 
 	userIDInt, err := strconv.ParseUint(userId, 10, 64)
@@ -62,7 +62,7 @@ func (t *UserController) RemoveUser(c *gin.Context) {
 
 	user, removeUserError := t.userUsecase.RemoveUser(userIDInt, currentUserIdInt)
 
-	if removeUserError != nil {
+	if removeUserError.Error != nil {
 		c.JSON(int(removeUserError.ErrorCode), gin.H{"error": removeUserError.Error.Error()})
 		return
 	}
@@ -70,10 +70,10 @@ func (t *UserController) RemoveUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully remove user"})
 }
 
-func (t *UserController) ListUsers(c *gin.Context) {
+func (t *UserRouter) ListUsers(c *gin.Context) {
 	users, err := t.userUsecase.ListUsers()
 
-	if err != nil {
+	if err.Error != nil {
 		c.JSON(int(err.ErrorCode), gin.H{"error": err.Error.Error()})
 		return
 	}

@@ -46,9 +46,9 @@ func (t *UserRepositoryImpl) FindAll() []User {
 	return users
 }
 
-func (t *UserRepositoryImpl) FindById(userId uint64) User {
+func (t *UserRepositoryImpl) FindById(id uint64) User {
 	var foundUser User
-	t.Db.Where("id=?", userId).Find(&foundUser)
+	t.Db.Where("id=?", id).Find(&foundUser)
 	return foundUser
 }
 

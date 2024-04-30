@@ -42,7 +42,8 @@ func (t *UserUsecaseImpl) RemoveUser(deleteUserIdRequest uint64, currentUserId u
 func (t *UserUsecaseImpl) ListUsers() (*[]repository.UserResponse, *helper.StandardError) {
 	users := t.UserRepository.FindAll()
 
-	var userResponses []repository.UserResponse
+	var userResponses = []repository.UserResponse{}
+
 	for _, user := range users {
 		userResponse := repository.UserResponse{
 			ID:        user.ID,
@@ -52,7 +53,6 @@ func (t *UserUsecaseImpl) ListUsers() (*[]repository.UserResponse, *helper.Stand
 		}
 		userResponses = append(userResponses, userResponse)
 	}
-
 	return &userResponses, nil
 }
 

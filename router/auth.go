@@ -8,19 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthController struct {
+type AuthRouter struct {
 	userUsecase usecase.UserUsecase
 	authUsecase usecase.AuthUsecase
 }
 
-func NewAuthController(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) *AuthController {
-	return &AuthController{
+func NewAuthRouter(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) AuthRouter {
+	return AuthRouter{
 		userUsecase: userUsecase,
 		authUsecase: authUsecase,
 	}
 }
 
-func (t *AuthController) Register(c *gin.Context) {
+func (t *AuthRouter) Register(c *gin.Context) {
 	var registerData repository.Register
 
 	if err := c.ShouldBindJSON(&registerData); err != nil {
@@ -30,7 +30,7 @@ func (t *AuthController) Register(c *gin.Context) {
 
 	user, registerError := t.authUsecase.Register(registerData)
 
-	if registerError != nil {
+	if registerError.Error != nil {
 		c.JSON(int(registerError.ErrorCode), gin.H{"error": registerError.Error.Error()})
 		return
 	}
@@ -38,7 +38,7 @@ func (t *AuthController) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully register"})
 }
 
-func (t *AuthController) Login(c *gin.Context) {
+func (t *AuthRouter) Login(c *gin.Context) {
 	var loginData repository.Login
 
 	if err := c.ShouldBindJSON(&loginData); err != nil {
@@ -48,7 +48,7 @@ func (t *AuthController) Login(c *gin.Context) {
 
 	token, loginError := t.authUsecase.Login(loginData)
 
-	if loginError != nil {
+	if loginError.Error != nil {
 		c.JSON(int(loginError.ErrorCode), gin.H{"error": loginError.Error.Error()})
 		return
 	}

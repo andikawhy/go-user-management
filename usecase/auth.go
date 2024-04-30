@@ -125,7 +125,7 @@ func (t *AuthUsecaseImpl) ValidateToken(c *gin.Context) {
 
 	user := t.UserRepository.FindByUsername(claims["username"].(string))
 
-	if user.ID == 0 {
+	if user == (repository.User{}) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
