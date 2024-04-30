@@ -6,24 +6,22 @@ import (
 	"andikawhy/go-user-management/usecase"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
-func init() {
-	loadEnvs()
-	repository.ConnectDB()
-}
-
 func main() {
-	ginRouter := gin.Default()
+	loadEnvs()
+	db := repository.ConnectDB()
 
-	ginRouter.GET("/", router.Root)
-	ginRouter.POST("/register", router.Register)
-	ginRouter.POST("/login", router.Login)
-	ginRouter.GET("/users", usecase.ValidateToken, router.ListUsers)
-	ginRouter.POST("/users", usecase.ValidateToken, router.CreateUser)
-	ginRouter.DELETE("/users/:id", usecase.ValidateToken, router.RemoveUser)
+	userRepository := repository.NewUserRepositoryImpl(db)
+
+	userUsecase := usecase.NewUserUsecaseImpl(userRepository)
+	authUsecase := usecase.NewAuthUsecaseImpl(userRepository)
+
+	userController := router.NewUserController(userUsecase, authUsecase)
+	authController := router.NewAuthController(userUsecase, authUsecase)
+
+	ginRouter := router.SetupRouter(userController, authController, authUsecase)
 	ginRouter.Run()
 }
 

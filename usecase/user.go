@@ -1,27 +1,33 @@
 package usecase
 
 import (
+	"andikawhy/go-user-management/helper"
 	"andikawhy/go-user-management/repository"
 	"errors"
 	"net/http"
 )
 
-func RemoveUser(deletedUserID uint64, currentUserId uint64) (*repository.UserResponse, *repository.StandardError) {
-	var userFound repository.User
+type UserUsecase interface {
+	RemoveUser(deletedUserID uint64, currentUserId uint64) (*repository.UserResponse, *helper.StandardError)
+	ListUsers() (*[]repository.UserResponse, *helper.StandardError)
+}
 
-	repository.DB.Where("id=?", deletedUserID).Find(&userFound)
+type UserUsecaseImpl struct {
+	UserRepository repository.UserRepository
+}
+
+func (t *UserUsecaseImpl) RemoveUser(deleteUserIdRequest uint64, currentUserId uint64) (*repository.UserResponse, *helper.StandardError) {
+	userFound := t.UserRepository.FindById(deleteUserIdRequest)
 
 	if userFound.ID == currentUserId {
-		return nil, &repository.StandardError{Error: errors.New("cannot delete current user"), ErrorCode: http.StatusBadRequest}
+		return nil, &helper.StandardError{Error: errors.New("cannot delete current user"), ErrorCode: http.StatusBadRequest}
 	}
 
 	if userFound.ID == 0 {
-		return nil, &repository.StandardError{Error: errors.New("user not found"), ErrorCode: http.StatusBadRequest}
+		return nil, &helper.StandardError{Error: errors.New("user not found"), ErrorCode: http.StatusBadRequest}
 	}
 
-	if err := repository.DB.Delete(&userFound).Error; err != nil {
-		return nil, &repository.StandardError{Error: errors.New("delete user db failure"), ErrorCode: http.StatusInternalServerError}
-	}
+	t.UserRepository.Delete(deleteUserIdRequest)
 
 	userResponse := repository.UserResponse{
 		ID:        userFound.ID,
@@ -33,12 +39,8 @@ func RemoveUser(deletedUserID uint64, currentUserId uint64) (*repository.UserRes
 	return &userResponse, nil
 }
 
-func ListUsers() (*[]repository.UserResponse, *repository.StandardError) {
-	var users []repository.User
-
-	if err := repository.DB.Find(&users).Error; err != nil {
-		return nil, &repository.StandardError{Error: err, ErrorCode: http.StatusInternalServerError}
-	}
+func (t *UserUsecaseImpl) ListUsers() (*[]repository.UserResponse, *helper.StandardError) {
+	users := t.UserRepository.FindAll()
 
 	var userResponses []repository.UserResponse
 	for _, user := range users {
@@ -52,4 +54,10 @@ func ListUsers() (*[]repository.UserResponse, *repository.StandardError) {
 	}
 
 	return &userResponses, nil
+}
+
+func NewUserUsecaseImpl(userRepository repository.UserRepository) UserUsecase {
+	return &UserUsecaseImpl{
+		UserRepository: userRepository,
+	}
 }
