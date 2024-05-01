@@ -63,7 +63,6 @@ func (t *UserRepositoryImpl) Save(user User) User {
 	return user
 }
 
-// TODO add error handler
 func NewUserRepositoryImpl(Db *gorm.DB) UserRepository {
 	return &UserRepositoryImpl{Db: Db}
 }

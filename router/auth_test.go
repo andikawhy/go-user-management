@@ -20,7 +20,7 @@ func TestRegister(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
 		mockAuthUsecase := new(mocks.AuthUsecaseMock)
-		authRouter := router.NewAuthRouter(mockUserUsecase, mockAuthUsecase)
+		authRouter := router.NewAuthRouterImpl(mockUserUsecase, mockAuthUsecase)
 
 		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
 
@@ -40,7 +40,7 @@ func TestRegister(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
 		mockAuthUsecase := new(mocks.AuthUsecaseMock)
-		authRouter := router.NewAuthRouter(mockUserUsecase, mockAuthUsecase)
+		authRouter := router.NewAuthRouterImpl(mockUserUsecase, mockAuthUsecase)
 
 		mockError := &helper.StandardError{Error: errors.New("error message"), ErrorCode: http.StatusInternalServerError}
 
@@ -58,7 +58,7 @@ func TestRegister(t *testing.T) {
 	})
 
 	t.Run("Bind JSON Error", func(t *testing.T) {
-		authRouter := router.NewAuthRouter(nil, nil)
+		authRouter := router.NewAuthRouterImpl(nil, nil)
 
 		router := gin.Default()
 		router.POST("/register", authRouter.Register)
@@ -79,7 +79,7 @@ func TestLogin(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
 		mockAuthUsecase := new(mocks.AuthUsecaseMock)
-		authRouter := router.NewAuthRouter(mockUserUsecase, mockAuthUsecase)
+		authRouter := router.NewAuthRouterImpl(mockUserUsecase, mockAuthUsecase)
 
 		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
 
@@ -99,7 +99,7 @@ func TestLogin(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
 		mockAuthUsecase := new(mocks.AuthUsecaseMock)
-		authRouter := router.NewAuthRouter(mockUserUsecase, mockAuthUsecase)
+		authRouter := router.NewAuthRouterImpl(mockUserUsecase, mockAuthUsecase)
 
 		mockError := &helper.StandardError{Error: errors.New("error message"), ErrorCode: http.StatusInternalServerError}
 
@@ -117,7 +117,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Bind JSON Error", func(t *testing.T) {
-		authRouter := router.NewAuthRouter(nil, nil)
+		authRouter := router.NewAuthRouterImpl(nil, nil)
 
 		router := gin.Default()
 		router.POST("/login", authRouter.Login)

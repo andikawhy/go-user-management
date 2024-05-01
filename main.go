@@ -18,8 +18,8 @@ func main() {
 	userUsecase := usecase.NewUserUsecaseImpl(userRepository)
 	authUsecase := usecase.NewAuthUsecaseImpl(userRepository)
 
-	userRouter := router.NewUserRouter(userUsecase, authUsecase)
-	authRouter := router.NewAuthRouter(userUsecase, authUsecase)
+	userRouter := router.NewUserRouterImpl(userUsecase, authUsecase)
+	authRouter := router.NewAuthRouterImpl(userUsecase, authUsecase)
 
 	ginRouter := router.SetupRouter(userRouter, authRouter, authUsecase)
 	ginRouter.Run()

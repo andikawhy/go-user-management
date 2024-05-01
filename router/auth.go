@@ -8,19 +8,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthRouter struct {
+type AuthRouter interface {
+	Register(c *gin.Context)
+	Login(c *gin.Context)
+}
+
+type AuthRouterImpl struct {
 	userUsecase usecase.UserUsecase
 	authUsecase usecase.AuthUsecase
 }
 
-func NewAuthRouter(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) AuthRouter {
-	return AuthRouter{
+func NewAuthRouterImpl(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) AuthRouter {
+	return &AuthRouterImpl{
 		userUsecase: userUsecase,
 		authUsecase: authUsecase,
 	}
 }
 
-func (t *AuthRouter) Register(c *gin.Context) {
+func (t *AuthRouterImpl) Register(c *gin.Context) {
 	var registerData repository.Register
 
 	if err := c.ShouldBindJSON(&registerData); err != nil {
@@ -38,7 +43,7 @@ func (t *AuthRouter) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully register"})
 }
 
-func (t *AuthRouter) Login(c *gin.Context) {
+func (t *AuthRouterImpl) Login(c *gin.Context) {
 	var loginData repository.Login
 
 	if err := c.ShouldBindJSON(&loginData); err != nil {

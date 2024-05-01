@@ -26,7 +26,7 @@ func TestRemoveUser(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, nil)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, nil)
 
 		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
 
@@ -47,8 +47,31 @@ func TestRemoveUser(t *testing.T) {
 		assert.MatchRegex(t, w.Body.String(), "successfully remove user")
 	})
 
-	t.Run("User ID Conversion Fail", func(t *testing.T) {
-		userRouter := router.NewUserRouter(nil, nil)
+	t.Run("Current user id parsing failure", func(t *testing.T) {
+		mockUserUsecase := new(mocks.UserUsecaseMock)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, nil)
+
+		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
+
+		mockUserUsecase.On("RemoveUser").Return(&mockUser, mockError)
+
+		router := gin.Default()
+		router.Use(func(c *gin.Context) {
+			c.Set("currentUserId", "abc")
+			c.Next()
+		})
+		router.DELETE("/users/:id", userRouter.RemoveUser)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodDelete, "/users/1", nil)
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		assert.MatchRegex(t, w.Body.String(), "Failed to convert current user ID")
+	})
+
+	t.Run("Requested User ID Conversion Fail", func(t *testing.T) {
+		userRouter := router.NewUserRouterImpl(nil, nil)
 
 		router := gin.Default()
 		router.DELETE("/users/:id", userRouter.RemoveUser)
@@ -64,7 +87,7 @@ func TestRemoveUser(t *testing.T) {
 
 	t.Run("Current user id context not found", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, nil)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, nil)
 
 		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
 
@@ -83,7 +106,7 @@ func TestRemoveUser(t *testing.T) {
 
 	t.Run("Error from use case", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, nil)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, nil)
 
 		mockError := &helper.StandardError{Error: errors.New("error message"), ErrorCode: http.StatusInternalServerError}
 
@@ -111,7 +134,7 @@ func TestListUsers(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, nil)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, nil)
 
 		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
 
@@ -130,7 +153,7 @@ func TestListUsers(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, nil)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, nil)
 
 		mockError := &helper.StandardError{Error: errors.New("error message"), ErrorCode: http.StatusInternalServerError}
 
@@ -155,7 +178,7 @@ func TestCreateUser(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
 		mockAuthUsecase := new(mocks.AuthUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, mockAuthUsecase)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, mockAuthUsecase)
 
 		mockError := &helper.StandardError{Error: nil, ErrorCode: http.StatusOK}
 
@@ -175,7 +198,7 @@ func TestCreateUser(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		mockUserUsecase := new(mocks.UserUsecaseMock)
 		mockAuthUsecase := new(mocks.AuthUsecaseMock)
-		userRouter := router.NewUserRouter(mockUserUsecase, mockAuthUsecase)
+		userRouter := router.NewUserRouterImpl(mockUserUsecase, mockAuthUsecase)
 
 		mockError := &helper.StandardError{Error: errors.New("error message"), ErrorCode: http.StatusInternalServerError}
 
@@ -193,7 +216,7 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("Bind JSON Error", func(t *testing.T) {
-		userRouter := router.NewUserRouter(nil, nil)
+		userRouter := router.NewUserRouterImpl(nil, nil)
 
 		router := gin.Default()
 		router.POST("/users", userRouter.CreateUser)

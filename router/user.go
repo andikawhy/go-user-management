@@ -9,19 +9,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserRouter struct {
+type UserRouter interface {
+	CreateUser(c *gin.Context)
+	RemoveUser(c *gin.Context)
+	ListUsers(c *gin.Context)
+}
+
+type UserRouterImpl struct {
 	userUsecase usecase.UserUsecase
 	authUsecase usecase.AuthUsecase
 }
 
-func NewUserRouter(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) UserRouter {
-	return UserRouter{
+func NewUserRouterImpl(userUsecase usecase.UserUsecase, authUsecase usecase.AuthUsecase) UserRouter {
+	return &UserRouterImpl{
 		userUsecase: userUsecase,
 		authUsecase: authUsecase,
 	}
 }
 
-func (t *UserRouter) CreateUser(c *gin.Context) {
+func (t *UserRouterImpl) CreateUser(c *gin.Context) {
 	var createUserData repository.Register
 
 	if err := c.ShouldBindJSON(&createUserData); err != nil {
@@ -39,7 +45,7 @@ func (t *UserRouter) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully create user"})
 }
 
-func (t *UserRouter) RemoveUser(c *gin.Context) {
+func (t *UserRouterImpl) RemoveUser(c *gin.Context) {
 	userId := c.Param("id")
 
 	userIDInt, err := strconv.ParseUint(userId, 10, 64)
@@ -70,7 +76,7 @@ func (t *UserRouter) RemoveUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": user, "message": "successfully remove user"})
 }
 
-func (t *UserRouter) ListUsers(c *gin.Context) {
+func (t *UserRouterImpl) ListUsers(c *gin.Context) {
 	users, err := t.userUsecase.ListUsers()
 
 	if err.Error != nil {
