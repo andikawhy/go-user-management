@@ -37,7 +37,7 @@ func (t *UserRouterImpl) CreateUser(c *gin.Context) {
 
 	user, registerError := t.authUsecase.Register(createUserData)
 
-	if registerError.Error != nil {
+	if registerError != nil && registerError.Error != nil {
 		c.JSON(int(registerError.ErrorCode), gin.H{"error": registerError.Error.Error()})
 		return
 	}
@@ -68,7 +68,7 @@ func (t *UserRouterImpl) RemoveUser(c *gin.Context) {
 
 	user, removeUserError := t.userUsecase.RemoveUser(userIDInt, currentUserIdInt)
 
-	if removeUserError.Error != nil {
+	if removeUserError != nil && removeUserError.Error != nil {
 		c.JSON(int(removeUserError.ErrorCode), gin.H{"error": removeUserError.Error.Error()})
 		return
 	}
@@ -79,7 +79,7 @@ func (t *UserRouterImpl) RemoveUser(c *gin.Context) {
 func (t *UserRouterImpl) ListUsers(c *gin.Context) {
 	users, err := t.userUsecase.ListUsers()
 
-	if err.Error != nil {
+	if err != nil && err.Error != nil {
 		c.JSON(int(err.ErrorCode), gin.H{"error": err.Error.Error()})
 		return
 	}

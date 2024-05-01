@@ -35,7 +35,7 @@ func (t *AuthRouterImpl) Register(c *gin.Context) {
 
 	user, registerError := t.authUsecase.Register(registerData)
 
-	if registerError.Error != nil {
+	if registerError != nil && registerError.Error != nil {
 		c.JSON(int(registerError.ErrorCode), gin.H{"error": registerError.Error.Error()})
 		return
 	}
@@ -53,7 +53,7 @@ func (t *AuthRouterImpl) Login(c *gin.Context) {
 
 	token, loginError := t.authUsecase.Login(loginData)
 
-	if loginError.Error != nil {
+	if loginError != nil && loginError.Error != nil {
 		c.JSON(int(loginError.ErrorCode), gin.H{"error": loginError.Error.Error()})
 		return
 	}
