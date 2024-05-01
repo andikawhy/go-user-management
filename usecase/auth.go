@@ -117,12 +117,6 @@ func (t *AuthUsecaseImpl) ValidateToken(c *gin.Context) {
 		return
 	}
 
-	if float64(time.Now().Unix()) > claims["exp"].(float64) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "token expired"})
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
 	user := t.UserRepository.FindByUsername(claims["username"].(string))
 
 	if user == (repository.User{}) {

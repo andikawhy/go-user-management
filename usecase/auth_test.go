@@ -116,6 +116,37 @@ func TestValidateToken(t *testing.T) {
 
 	os.Setenv("SECRET", "testkey")
 
+	t.Run("Valid token and user exists", func(t *testing.T) {
+		userRepositoryMock.On("FindByUsername").Return(mockUser)
+		claims := jwt.MapClaims{
+			"username": "validUser",
+			"exp":      float64(time.Now().Add(time.Hour).Unix()),
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokenString, _ := token.SignedString([]byte(os.Getenv("SECRET")))
+
+		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+		req.Header.Add("Authorization", "Bearer "+tokenString)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestValidateTokenNegative(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.Default()
+	userRepositoryMock := new(mocks.UserRepositoryMock)
+	authUsecase := usecase.NewAuthUsecaseImpl(userRepositoryMock)
+	router.Use(authUsecase.ValidateToken)
+
+	router.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	os.Setenv("SECRET", "testkey")
+
 	t.Run("Authorization header missing", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 		w := httptest.NewRecorder()
@@ -148,8 +179,8 @@ func TestValidateToken(t *testing.T) {
 		assert.MatchRegex(t, w.Body.String(), "invalid or expired token")
 	})
 
-	t.Run("Valid token and user exists", func(t *testing.T) {
-		userRepositoryMock.On("FindByUsername").Return(mockUser)
+	t.Run("Valid token and user not exists", func(t *testing.T) {
+		userRepositoryMock.On("FindByUsername").Return(repository.User{})
 		claims := jwt.MapClaims{
 			"username": "validUser",
 			"exp":      float64(time.Now().Add(time.Hour).Unix()),
@@ -162,6 +193,6 @@ func TestValidateToken(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }
