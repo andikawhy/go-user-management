@@ -89,6 +89,19 @@ func TestRegister(t *testing.T) {
 		assert.Equal(t, err, helper.StandardError{Error: errors.New("user already exist"), ErrorCode: http.StatusBadRequest})
 		assert.Equal(t, registerResult, nil)
 	})
+
+	t.Run("error hash password", func(t *testing.T) {
+		userRepositoryMock := new(mocks.UserRepositoryMock)
+
+		userRepositoryMock.On("FindByUsername").Return(repository.User{})
+		userRepositoryMock.On("Save").Return(mockUser)
+
+		authUsecase := usecase.NewAuthUsecaseImpl(userRepositoryMock)
+		registerResult, err := authUsecase.Register(repository.Register{Username: "username", Password: "superlongpasswordtextthatcanbehashedbylibrarysuperlongpasswordtextthatcanbehashedbylibrary", Email: "test@mail.com"})
+
+		assert.Equal(t, err, helper.StandardError{Error: errors.New("bcrypt: password length exceeds 72 bytes"), ErrorCode: http.StatusInternalServerError})
+		assert.Equal(t, registerResult, nil)
+	})
 }
 func TestValidateToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
